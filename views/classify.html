@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="/public/layui/css/layui.css">
+</head>
+
+<body class="layui-layout-body">
+    <div class="layui-layout layui-layout-admin">
+        {{include "./common/header.html"}}
+        {{include "./common/side.html"}}
+        <div class="layui-body">
+            <div style="padding: 15px;">
+                <div class="layui-form">
+                    <h2>栏目管理</h2>
+                    <table class="layui-table">
+                        <colgroup>
+                            <col width="150">
+                            <col width="200">
+                            <col width="">
+                            <col width="">
+                            <col width="200">
+                            <col>
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>序号</th>
+                                <th>分类名称</th>
+                                <th>排序</th>
+                                <th>发布时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {{include "./common/foot.html"}}
+    </div>
+</body>
+<script src="/public/layui/layui.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.js"></script>
+<script src="/public/js/moment.js"></script>
+<script src="/public/js/util.js"></script>
+<script>
+    function addTo(data) {
+        // addTo的参数的内容是从服务器传过来的数据
+        // 循环並追加到tobody中， 这里的key为数组中的每一个值
+        let addHtml = ``;
+        data.forEach((key, index) => {
+            // 解构赋值方法
+            let { sort_name, sorts, sort_date, id } = key;
+            console.log(key);
+            // sort_date = moment(sort_date).format('YYYY-MM-DD HH:mm:ss')
+            sort_date = util.date_format(sort_date)
+            // 模板字符串
+            addHtml += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${sort_name}</td>
+                <td>${sorts}</td>
+                <td>${sort_date}</td>
+                <td>
+                    <button title="编辑" type="button" class="layui-btn layui-btn-warm "><i class="layui-icon"></i></button>
+                    <button title="删除" catId='${id}' type="button" class="layui-btn layui-btn-danger del"><i class="layui-icon"></i></button>
+                </td>
+            </tr>
+            `
+            $("#tbody").html(addHtml)
+        });
+    }
+    // ajax请求获取表格数据
+    function getclassify() {
+        $.ajax({
+            url: "/getsort"
+        }).then(function (res) {
+            addTo(res)
+        })
+    }
+    getclassify();
+    layui.use(["layer", "element"], function () {
+    });
+
+    // 删除操作发送ajax请求（事件委托方法回顾）
+    $("#tbody").on('click', '.del', function () {
+        let _this = $(this) //这里是用于保存this的调用者
+        let Cat_id = $(this).attr("catId");
+        // 防止误删除代码
+        layer.confirm('确定要删除', {
+            btn: ['确定', '取消'] //按钮
+        }, function () {
+            $.ajax({
+                type: 'post'
+                , url: '/deleSort'
+                , data: { Cat_id }
+                , dataType: "json"
+            }).then(function (res) {
+                let { errcode,message} = res;
+                if (errcode == 1000) {
+                    _this.parents('tr').remove();
+                    layer.closeAll();
+                    $.each($('#tbody tr').find('td:eq(0)'),function(index,ele){
+                        $(ele).html(index + 1)
+                    })
+                    layer.msg(message)
+                }
+            })
+        })
+    });
+</script>
+
+</html>

@@ -12,10 +12,11 @@ connection.connect(function (err) {
     }
     console.log('connect mysql success');
 });
+
 // 分类表函数封装
-function dbquery(sql) {
+function dbquery(condition) {
     return new Promise((resolve, reject) => {
-        connection.query(sql, (err, rows) => {
+        connection.query(condition, (err, rows) => {
             if (err) { reject(err) }
             // 返回数据
             resolve(rows)

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="/public/layui/css/layui.css">
+</head>
+
+<body class="layui-layout-body">
+    <div class="layui-layout layui-layout-admin">
+        {{include "./common/header.html"}}
+        {{include "./common/side.html"}}
+        <div class="layui-body">
+            <div style="padding: 15px;">
+                <form class="layui-form" action="">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">分类名称</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="sort_name" lay-verify="required" placeholder="请输入分类名称"
+                                autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">排序</label>
+                        <div class="layui-input-inline">
+                            <input type="number" name="sorts" lay-verify="required" autocomplete="off"
+                                class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">添加时间</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="date" id="date1" autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <button class="layui-btn" lay-submit lay-filter="formDemo">编辑</button>
+                                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                            </div>
+                        </div>
+                </form>
+            </div>
+        </div>
+        {{include "./common/foot.html"}}
+    </div>
+</body>
+<script src="/public/layui/layui.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.js"></script>
+<script src="/public/js/moment.js"></script>
+<script src="/public/js/util.js"></script>
+<script>
+    // 主页点击编辑按钮后跳转到这个页面，id也跟着过来
+    let url = location.href;
+    // 正则匹配链接最后面的cat_id的值
+    let reg = /cat_id=(.*)&?/;
+    // let result = reg.exec(url);
+    let [, catId] = [...reg.exec(url)]
+    $.ajax({
+        url: '/getEdit?cat_id=' + catId,
+    }).then(function (res) {
+        // 解构赋值
+        let { errcode, sort_name, sorts, sort_date } = res;
+        // 时间处理
+        sort_date = util.date_format(sort_date)
+        if (errcode == 1006) {
+            $("input[name='sort_name']").val(sort_name);
+            $("input[name='sorts']").val(sorts);
+            $("input[name='date']").val(sort_date);
+        }
+    })
+    // layui布局模块监听
+    layui.use(["layer", "element", "form", "laydate"], function () {
+        var layer = layui.layer;
+        var element = layui.element
+        var form = layui.form
+        var laydate = layui.laydate
+        //时间
+        laydate.render({
+            elem: '#date'
+        });
+        laydate.render({
+            elem: '#date1',
+            type: "datetime"
+
+        });
+        //监听提交
+        form.on('submit(formDemo)', function (data) {
+            let btntext = data.elem.innerText;
+            $(data.elem).addClass('layui-btn-disabled').text('编辑中...')
+            $.ajax({
+                url:"/upDate",
+                type:"post",
+                data:{
+                    catId,
+                    ...data.field
+                },
+                dataType:"json"
+            }).then(function(res){
+                $(data.elem).removeClass('layui-btn-disabled').text(btntext)
+                let {errcode,message} = res;
+                if(errcode == 10000){
+                    layer.msg(message)
+                    location.href = '/sort'
+                }else{
+                    layer.msg(message)
+                }
+            })
+            return false
+        });
+    });
+</script>
+
+</html>

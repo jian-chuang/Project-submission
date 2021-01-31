@@ -40,6 +40,7 @@ router.get('/getEdit',SortController.getEdit)
 router.post('/upDate',SortController.upDate)
 
 
-
+// 文章管理数据删除操作
+router.post('/artDel',listController.artDel)
 // 全局暴露
 module.exports = router;

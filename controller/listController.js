@@ -1,10 +1,12 @@
 let listController = {};
 // let mockdata = require('../mockData/mock-list.json')
 const dbquery = require("../model/sqlmodel");
+const { success, fail } = require("../util/responseMessage");
 
 listController.list = (req,res)=>{
     res.render("list.html")
 }
+// 数据渲染
 listController.getlist = async (req,res)=>{
     let {page,limit:pagesize} = req.query;
     let offest = (page - 1) * pagesize;
@@ -28,5 +30,17 @@ listController.getlist = async (req,res)=>{
     }
     res.json(response)
     // res.json(mockdata)
+}
+// 数据删除操作
+listController.artDel = async (req,res)=>{
+    let {art_id} = req.body;
+    console.log(art_id);
+    let sql = `delete from article where art_id = ${art_id}`
+    let result = await dbquery(sql)
+    if(result.affectedRows){
+        res.json(success)
+    }else{
+        res.json(fail)
+    }
 }
 module.exports = listController

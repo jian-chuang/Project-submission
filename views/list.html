@@ -23,6 +23,7 @@
                   </div>
                 </script>
                 <script type="text/html" id="barDemo">
+                    <a class="layui-btn layui-btn-xs" lay-event="show">查看内容</a>
                   <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
                   <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
                 </script>
@@ -31,12 +32,17 @@
     </div>
     {{include "./common/foot.html"}}
 </body>
+
+<script src="/public/js/jquery.js"></script>
+<script src="/public/js/moment.js"></script>
 <script src="/public/layui/layui.js"></script>
+<script src="/public/js/util.js"></script>
+
 <script>
-    layui.use(["element","table"], function () {
+    layui.use(["element", "table"], function () {
         var element = layui.element;
         var table = layui.table;
-        table.render({
+        let tableUI = table.render({
             elem: '#test'
             , url: '/getlist'
             , toolbar: '#toolbarDemo' //开启头部工具栏，并为其绑定左侧模板
@@ -45,29 +51,75 @@
                 , layEvent: 'LAYTABLE_TIPS'
                 , icon: 'layui-icon-tips'
             }]
+            , limit: '5'
+            , limits: [5, 10, 15, 20]
+            , request: {
+                pageName: 'page'
+                , limitName: 'limit'
+            }
             , title: '用户数据表'
             , cols: [[
                 { type: 'checkbox', fixed: 'left' }
-                , { field: 'id', title: 'ID', width: 80, fixed: 'left', unresize: true, sort: true }
-                , { field: 'title', title: '标题', width: 120, edit: 'text' }
-                , { field: 'content', title: '内容', width: 120, edit: 'text' }
-                , { field: 'cat_id', title: '分类', width: 120, edit: 'text'}
-                , { field: 'author', title: '作者', width: 120, edit: 'text', sort: true }
-                , { field: 'cover', title: '图片'}
-                , { field: 'status', title: '状态', width:150,templet:function(item){
-                    console.log(item);
-                    let statusMap = {
-                        '0':"未发布",
-                        '1':"已发布",
-                        '2':"审核中"
+                , { field: 'art_id', title: 'ID', width: 80, fixed: 'left', unresize: true, sort: true, hide:false }
+                , { field: 'title', title: '标题', width: 100, edit: 'text' }
+                , { field: 'content', title: '内容', width: 100, edit: 'text' }
+                , { field: 'cat_id', title: '分类', width: 100, edit: 'text' }
+                , { field: 'author', title: '作者', width: 100, edit: 'text', sort: true }
+                , { field: 'cover', title: '图片' }
+                , {
+                    field: 'status', title: '状态', templet: function (item) {
+                        console.log(item);
+                        let statusMap = {
+                            '0': "未发布",
+                            '1': "已发布",
+                            '2': "审核中"
+                        }
+                        return statusMap[item.status]
                     }
-                    return statusMap[item.status]
-                }}
-                , { field: 'publish_date', title: '发布时间',sort: true }
-                , { fixed: 'right', title: '操作', toolbar: '#barDemo', width: 150 }
+                }
+                , {
+                    field: 'publish_date', title: '发布时间', sort: true, templet: (time) => {
+                        let { publish_date } = time;
+                        return util.date_format(publish_date)
+                    }
+                }
+                , { fixed: 'right', title: '操作', toolbar: '#barDemo' }
             ]]
             , page: true
         });
+
+        table.on('tool(test)', function (obj) {
+            console.log(obj);
+            let { data, event } = obj;
+            let { art_id } = data
+            console.log(art_id);
+            switch (event) {
+                case 'del':
+                    del(art_id);
+                    break;
+            }
+        });
+        // 文章删除数据操作
+        function del(art_id) {
+            $.ajax({
+                url: '/artDel',
+                type: 'post',
+                data: { art_id },
+                dataType: 'json'
+            }).then(function (res) {
+                let { errcode, message } = res;
+                // 防止误删除代码
+                layer.confirm('确定要删除', {
+                    btn: ['确定', '取消'] //按钮
+                }, function () {
+                    if (errcode == 1000) {
+                        layer.closeAll();
+                        tableUI.reload();
+                        layer.msg(message)
+                    }
+                })
+            })
+        }
     });
 </script>
 
